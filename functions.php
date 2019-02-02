@@ -1,7 +1,7 @@
 <?php
 
-require('models/perfil.php');
-require('models/guia.php');
+// require('models/perfil.php');
+// require('models/guia.php');
 require_once('config-db.php');
 
     use PHPMailer\PHPMailer\PHPMailer;
@@ -94,99 +94,6 @@ function enviaremail($destinatario, $assunto, $mensagem){
     
 }
 
-/**
-* Função para gerar senhas aleatórias
-*
-* @author    Thiago Belem <contato@thiagobelem.net>
-*
-* @param integer $tamanho Tamanho da senha a ser gerada
-* @param boolean $maiusculas Se terá letras maiúsculas
-* @param boolean $numeros Se terá números
-* @param boolean $simbolos Se terá símbolos
-*
-* @return string A senha gerada
-*/
-
-function geraSenha($tamanho = 8, $maiusculas = true, $numeros = true, $simbolos = true){
-    $lmin = 'abcdefghijklmnopqrstuvwxyz';
-    $lmai = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    $num = '1234567890';
-    $simb = '!@#$%*-';
-    $retorno = '';
-    $caracteres = '';
-    $caracteres .= $lmin;
-    if ($maiusculas) $caracteres .= $lmai;
-    if ($numeros) $caracteres .= $num;
-    if ($simbolos) $caracteres .= $simb;
-    $len = strlen($caracteres);
-    
-    for ($n = 1; $n <= $tamanho; $n++) {
-        $rand = mt_rand(1, $len);
-        $retorno .= $caracteres[$rand-1];
-    }
-    
-    return $retorno;
-}
-
-function geraNum($digits){
-    return str_pad(rand(0, pow(10, $digits)-1), $digits, '0', STR_PAD_LEFT);
-}
-
-function permissao($item) {
-    global $mydb;
-
-    $permissao = false;
-
-    $pesquisausuario = $mydb->query("SELECT * FROM  usuarios WHERE id = ".$_SESSION["id_usuario"]);
-
-    if($pesquisausuario->num_rows > 0){
-
-        while ($row = $pesquisausuario->fetch_assoc()) {
-            $permissoes = json_decode($row["permissoes"]);
-        }
-    }
-
-    $permissao = isset($permissoes->$item) ? $permissoes->$item : false;
-
-    return $permissao;
-}
-
-function get_info_perfil($id, $info) {
-    global $mydb;
-
-    if($id != NULL){
-        $pesquisainfo = $mydb->query("SELECT * FROM perfis WHERE usuario = ".$id);
-
-        if($pesquisainfo->num_rows > 0){
-            while ($row = $pesquisainfo->fetch_assoc()) {
-                return $row[$info];
-            }
-        }else{
-            return null;
-        }
-    }else{
-        return null;
-    }
-}
-
-function get_atendimento($id) {
-    global $mydb;
-
-    if($id != NULL){
-        $pesquisaatendimento = $mydb->query("SELECT * FROM atendimentos WHERE id = ".$id);
-
-        if($pesquisaatendimento->num_rows > 0){
-            while ($row = $pesquisaatendimento->fetch_assoc()) {
-                return array( $row["atendimento"], $row["participacao"] );
-            }
-        }else{
-            return null;
-        }
-    }else{
-        return null;
-    }
-}
-
 function get_convenio($id) {
     global $mydb;
 
@@ -240,37 +147,11 @@ function get_object_perfil($id) { //idusuario
     }
 }
 
-function get_object_guia($id) {
-    global $mydb;
-    return true;
-}
-
-function checkEmail($email) {
-    global $mydb;
-
-    $pesquisausuario = $mydb->query("SELECT * FROM usuarios WHERE email = '$email' ");
-    return $pesquisausuario->num_rows > 0;
-}
-
-function checkGuia($numero) {
-    global $mydb;
-
-    $pesquisaguia = $mydb->query("SELECT * FROM guias WHERE numero = '$numero' ");
-    return $pesquisaguia->num_rows > 0;
-}
-
 function checkPaciente($nome) {
     global $mydb;
 
     $pesquisapaciente = $mydb->query("SELECT * FROM pacientes WHERE nome = '$nome' ");
     return $pesquisapaciente->num_rows > 0;
-}
-
-function checkConvenio($nome) {
-    global $mydb;
-
-    $pesquisaconvenios = $mydb->query("SELECT * FROM convenios WHERE convenio = '$nome' ");
-    return $pesquisaconvenios->num_rows > 0;
 }
 
 function isFuncao($id, $funcao) {
@@ -291,44 +172,6 @@ function num_clientes($especialidade) {
     return $pesquisaclientes->num_rows;
 }
 
-function num_dentistas(){
-    global $mydb;
-
-    $pesquisadentistas = $mydb->query("SELECT * FROM perfis WHERE funcao = 'dentista' ");
-    $num_naovalidados = 0;
-
-    while($row = $pesquisadentistas->fetch_assoc()){
-        $usuario_id = $row["usuario"];
-        $pesquisavalidacao = $mydb->query("SELECT * FROM usuarios WHERE id = $usuario_id AND validacao = 0 AND b_del=0");
-        if($pesquisavalidacao->num_rows){
-            $num_naovalidados++;
-        }
-    }
-
-    return array($pesquisadentistas->num_rows, $num_naovalidados);
-}
-
-function converter_year_month($str){
-    $meses = array(
-        "", "Janeiro",
-        "Fevereiro",
-        "Março",
-        "Março",
-        "Maio",
-        "Junho",
-        "Julho",
-        "Agosto",
-        "Setembro",
-        "Outubro",
-        "Novembro",
-        "Dezembro"
-    );
-
-    $visivel = $meses[substr($str, 4, 2)]." de ".substr($str, 0, 4);
-    $formatado = substr($str, 0, 4)."-".substr($str, 4, 2);
-    return [$visivel, $formatado];
-}
-
 function console_log( $data ){
     echo '<script>';
     echo 'console.log('. json_encode( $data ) .')';
@@ -343,25 +186,6 @@ function highlight($query, $string){
     $newstring = "<span class='highlight'>".$query."</span>";
     $string = str_ireplace($query, $newstring, $string);
     return $string;
-}
-
-function configuracoes($chave, $n_valores){
-    global $mydb;
-    
-     $pesquisaconf = $mydb->query("SELECT * FROM  configuracoes WHERE chave = '$chave'");
-                                
-    if($pesquisaconf->num_rows > 0){
-
-
-        while ($row = $pesquisaconf->fetch_assoc()) {
-
-            return $row["valor1"];
-
-        }
-
-    }else{
-        return "Configuração não encontrada";
-    }
 }
 
 ?>
